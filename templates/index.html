@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Performance Predictor</title>
+</head>
+<body>
+    <h1>Player Performance Predictor</h1>
+    
+    <h2>Add Training Data</h2>
+    <form id="add-data-form">
+        Player: <input type="text" name="player" required><br>
+        Past Points: <input type="number" name="past_points" required><br>
+        Team Strength (1-10): <input type="number" name="team_strength" min="1" max="10" required><br>
+        Opponent Rank (1-10): <input type="number" name="opponent_rank" min="1" max="10" required><br>
+        Future Points: <input type="number" name="future_points" required><br>
+        <button type="submit">Add Data</button>
+    </form>
+    
+    <h2>Train Model</h2>
+    <button id="train-model-btn">Train Model</button>
+    <p id="train-result"></p>
+    
+    <h2>Predict Future Performance</h2>
+    <form id="predict-form">
+        Past Points: <input type="number" name="past_points" required><br>
+        Team Strength (1-10): <input type="number" name="team_strength" min="1" max="10" required><br>
+        Opponent Rank (1-10): <input type="number" name="opponent_rank" min="1" max="10" required><br>
+        <button type="submit">Predict</button>
+    </form>
+    <p id="prediction-result"></p>
+    
+    <script>
+        document.getElementById("add-data-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch("/add_data", {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+        });
+
+        document.getElementById("train-model-btn").addEventListener("click", async () => {
+            const response = await fetch("/train_model", { method: "POST" });
+            const result = await response.json();
+            document.getElementById("train-result").innerText = result.message;
+        });
+
+        document.getElementById("predict-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch("/predict", {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+            if (result.status === "success") {
+                document.getElementById("prediction-result").innerText = `Predicted Future Points: ${result.prediction.toFixed(2)}`;
+            } else {
+                alert(result.message);
+            }
+        });
+    </script>
+</body>
+</html>
