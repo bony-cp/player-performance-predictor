@@ -4,65 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Performance Predictor</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(to right, #f7f8fc, #e0e5ec);
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
 </head>
 <body>
     <h1>Player Performance Predictor</h1>
-    
+
     <h2>Add Training Data</h2>
-    <form id="add-data-form">
-        Player: <input type="text" name="player" required><br>
-        Past Points: <input type="number" name="past_points" required><br>
-        Team Strength (1-10): <input type="number" name="team_strength" min="1" max="10" required><br>
-        Opponent Rank (1-10): <input type="number" name="opponent_rank" min="1" max="10" required><br>
-        Future Points: <input type="number" name="future_points" required><br>
-        <button type="submit">Add Data</button>
+    <!-- Add Training Data Section -->
+    <form id="addDataForm">
+        <label for="player">Player:</label>
+        <input type="text" id="player" name="player" required>
+        <br>
+        <label for="past_points">Past Points:</label>
+        <input type="number" id="past_points" name="past_points" required>
+        <br>
+        <label for="team_strength">Team Strength (1-10):</label>
+        <input type="number" id="team_strength" name="team_strength" required>
+        <br>
+        <label for="opponent_rank">Opponent Rank (1-10):</label>
+        <input type="number" id="opponent_rank" name="opponent_rank" required>
+        <br>
+        <label for="future_points">Future Points:</label>
+        <input type="number" id="future_points" name="future_points" required>
+        <br>
+        <button type="button" onclick="addData()">Add Data</button>
     </form>
-    
+
     <h2>Train Model</h2>
-    <button id="train-model-btn">Train Model</button>
-    <p id="train-result"></p>
-    
+    <button onclick="trainModel()">Train Model</button>
+    <p id="trainMessage"></p>
+
     <h2>Predict Future Performance</h2>
-    <form id="predict-form">
-        Past Points: <input type="number" name="past_points" required><br>
-        Team Strength (1-10): <input type="number" name="team_strength" min="1" max="10" required><br>
-        Opponent Rank (1-10): <input type="number" name="opponent_rank" min="1" max="10" required><br>
-        <button type="submit">Predict</button>
+    <!-- Predict Future Performance Section -->
+    <form id="predictForm">
+        <label for="player">Player:</label>
+        <input type="text" id="predict_player" name="player">
+        <br>
+        <label for="past_points">Past Points:</label>
+        <input type="number" id="predict_past_points" name="past_points" required>
+        <br>
+        <label for="team_strength">Team Strength (1-10):</label>
+        <input type="number" id="predict_team_strength" name="team_strength" required>
+        <br>
+        <label for="opponent_rank">Opponent Rank (1-10):</label>
+        <input type="number" id="predict_opponent_rank" name="opponent_rank" required>
+        <br>
+        <button type="button" onclick="predictPerformance()">Predict</button>
     </form>
-    <p id="prediction-result"></p>
-    
+    <p id="predictMessage"></p>
+
+    <!-- Footer Section -->
+    <footer>
+        © 2025 Oseas Castillo. All Rights Reserved.
+    </footer>
+
     <script>
-        document.getElementById("add-data-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const response = await fetch("/add_data", {
-                method: "POST",
-                body: formData
+        function addData() {
+            $.post("/add_data", $("#addDataForm").serialize(), function(response) {
+                alert(response.message);
             });
-            const result = await response.json();
-            alert(result.message);
-        });
+        }
 
-        document.getElementById("train-model-btn").addEventListener("click", async () => {
-            const response = await fetch("/train_model", { method: "POST" });
-            const result = await response.json();
-            document.getElementById("train-result").innerText = result.message;
-        });
-
-        document.getElementById("predict-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const response = await fetch("/predict", {
-                method: "POST",
-                body: formData
+        function trainModel() {
+            $.post("/train_model", function(response) {
+                $("#trainMessage").text(response.message);
             });
-            const result = await response.json();
-            if (result.status === "success") {
-                document.getElementById("prediction-result").innerText = `Predicted Future Points: ${result.prediction.toFixed(2)}`;
-            } else {
-                alert(result.message);
-            }
-        });
+        }
+
+        function predictPerformance() {
+            $.post("/predict", $("#predictForm").serialize(), function(response) {
+                if (response.status === "success") {
+                    $("#predictMessage").text(
+                        `Prediction for ${response.player}: ${response.prediction.toFixed(2)}`
+                    );
+                } else {
+                    $("#predictMessage").text(response.message);
+                }
+            });
+        }
     </script>
 </body>
 </html>
