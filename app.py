@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error
 import joblib
 import os
@@ -12,18 +12,19 @@ app = Flask(__name__)
 player_data = pd.DataFrame(columns=["Player", "PastPoints", "TeamStrength", "OpponentRank", "FuturePoints"])
 model = None
 
-# Load data and model if they exist
+# Load saved data and model at startup
 if os.path.exists("player_data.csv"):
     player_data = pd.read_csv("player_data.csv")
 
 if os.path.exists("model.pkl"):
     model = joblib.load("model.pkl")
-
+    print("Model loaded successfully!")
+else:
+    print("No pre-trained model found. Please train the model.")
 
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 @app.route("/add_data", methods=["POST"])
 def add_data():
@@ -58,7 +59,6 @@ def add_data():
     except Exception as e:
         return jsonify({"status": "error", "message": f"An error occurred: {str(e)}"})
 
-
 @app.route("/train_model", methods=["POST"])
 def train_model():
     global model
@@ -73,8 +73,25 @@ def train_model():
         y = player_data["FuturePoints"]
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        model = RandomForestRegressor()
-        model.fit(X_train, y_train)
+
+        # Define the model
+        rf = RandomForestRegressor(random_state=42)
+
+        # Define the parameter grid
+        param_grid = {
+            "n_estimators": [50, 100, 200],
+            "max_depth": [None, 10, 20],
+            "min_samples_split": [2, 5, 10],
+            "min_samples_leaf": [1, 2, 4],
+            "max_features": ["auto", "sqrt", "log2"]
+        }
+
+        # Perform Grid Search
+        grid_search = GridSearchCV(estimator=rf, param_grid=param_grid, cv=3, scoring="neg_mean_squared_error", n_jobs=-1)
+        grid_search.fit(X_train, y_train)
+
+        # Get the best model
+        model = grid_search.best_estimator_
 
         # Save the trained model
         joblib.dump(model, "model.pkl")
@@ -89,11 +106,11 @@ def train_model():
 
         return jsonify({
             "status": "success",
-            "message": f"Model trained successfully! Mean Squared Error: {mse:.2f}. Feature Importances: {importance_message}"
+            "message": f"Model trained successfully! Best Parameters: {grid_search.best_params_}. "
+                       f"Mean Squared Error: {mse:.2f}. Feature Importances: {importance_message}"
         })
     except Exception as e:
         return jsonify({"status": "error", "message": f"An error occurred during training: {str(e)}"})
-
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -117,29 +134,6 @@ def predict():
         return jsonify({"status": "error", "message": "Invalid data format. Please enter numeric values."})
     except Exception as e:
         return jsonify({"status": "error", "message": f"An error occurred during prediction: {str(e)}"})
-
-
-@app.route("/save_data", methods=["POST"])
-def save_data():
-    try:
-        global player_data
-        player_data.to_csv("player_data.csv", index=False)
-        return jsonify({"status": "success", "message": "Data saved successfully!"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"An error occurred while saving data: {str(e)}"})
-
-
-@app.route("/load_model", methods=["POST"])
-def load_model():
-    global model
-    try:
-        model = joblib.load("model.pkl")
-        return jsonify({"status": "success", "message": "Model loaded successfully!"})
-    except FileNotFoundError:
-        return jsonify({"status": "error", "message": "No model found. Please train a model first."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"An error occurred while loading the model: {str(e)}"})
-
 
 if __name__ == "__main__":
     app.run(debug=True)
