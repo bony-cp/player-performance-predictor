@@ -9,9 +9,37 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             box-sizing: border-box;
             background: linear-gradient(to right, #f7f8fc, #e0e5ec);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: inline-block;
+            width: 200px;
+            margin-bottom: 5px;
+        }
+        input {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: calc(100% - 220px);
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
         }
         footer {
             text-align: center;
@@ -21,83 +49,112 @@
             font-size: 14px;
             color: #555;
         }
+        .message {
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+        }
     </style>
 </head>
 <body>
     <h1>Player Performance Predictor</h1>
 
     <h2>Add Training Data</h2>
-    <!-- Add Training Data Section -->
     <form id="addDataForm">
         <label for="player">Player:</label>
         <input type="text" id="player" name="player" required>
         <br>
         <label for="past_points">Past Points:</label>
-        <input type="number" id="past_points" name="past_points" required>
+        <input type="number" id="past_points" name="past_points" min="0" required>
         <br>
         <label for="team_strength">Team Strength (1-10):</label>
-        <input type="number" id="team_strength" name="team_strength" required>
+        <input type="number" id="team_strength" name="team_strength" min="1" max="10" required>
         <br>
         <label for="opponent_rank">Opponent Rank (1-10):</label>
-        <input type="number" id="opponent_rank" name="opponent_rank" required>
+        <input type="number" id="opponent_rank" name="opponent_rank" min="1" max="10" required>
         <br>
         <label for="future_points">Future Points:</label>
-        <input type="number" id="future_points" name="future_points" required>
+        <input type="number" id="future_points" name="future_points" min="0" required>
         <br>
         <button type="button" onclick="addData()">Add Data</button>
     </form>
 
     <h2>Train Model</h2>
     <button onclick="trainModel()">Train Model</button>
-    <p id="trainMessage"></p>
+    <p id="trainMessage" class="message"></p>
 
     <h2>Predict Future Performance</h2>
-    <!-- Predict Future Performance Section -->
     <form id="predictForm">
-        <label for="player">Player:</label>
+        <label for="predict_player">Player (Optional):</label>
         <input type="text" id="predict_player" name="player">
         <br>
-        <label for="past_points">Past Points:</label>
-        <input type="number" id="predict_past_points" name="past_points" required>
+        <label for="predict_past_points">Past Points:</label>
+        <input type="number" id="predict_past_points" name="past_points" min="0" required>
         <br>
-        <label for="team_strength">Team Strength (1-10):</label>
-        <input type="number" id="predict_team_strength" name="team_strength" required>
+        <label for="predict_team_strength">Team Strength (1-10):</label>
+        <input type="number" id="predict_team_strength" name="team_strength" min="1" max="10" required>
         <br>
-        <label for="opponent_rank">Opponent Rank (1-10):</label>
-        <input type="number" id="predict_opponent_rank" name="opponent_rank" required>
+        <label for="predict_opponent_rank">Opponent Rank (1-10):</label>
+        <input type="number" id="predict_opponent_rank" name="opponent_rank" min="1" max="10" required>
         <br>
         <button type="button" onclick="predictPerformance()">Predict</button>
     </form>
-    <p id="predictMessage"></p>
+    <p id="predictMessage" class="message"></p>
 
-    <!-- Footer Section -->
     <footer>
         © 2025 Oseas Castillo. All Rights Reserved.
     </footer>
 
     <script>
         function addData() {
-            $.post("/add_data", $("#addDataForm").serialize(), function(response) {
-                alert(response.message);
-            });
+            $("#trainMessage").text(""); // Clear any previous messages
+            $.post("/add_data", $("#addDataForm").serialize())
+                .done(function(response) {
+                    if (response.status === "success") {
+                        alert(response.message);
+                        $("#addDataForm")[0].reset(); // Clear the form
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                })
+                .fail(function() {
+                    alert("An error occurred while adding data.");
+                });
         }
 
         function trainModel() {
-            $.post("/train_model", function(response) {
-                $("#trainMessage").text(response.message);
-            });
+            $("#trainMessage").text("Training in progress...");
+            $.post("/train_model")
+                .done(function(response) {
+                    if (response.status === "success") {
+                        $("#trainMessage").text(response.message);
+                    } else {
+                        $("#trainMessage").addClass("error").text(response.message);
+                    }
+                })
+                .fail(function() {
+                    $("#trainMessage").addClass("error").text("An error occurred while training the model.");
+                });
         }
 
         function predictPerformance() {
-            $.post("/predict", $("#predictForm").serialize(), function(response) {
-                if (response.status === "success") {
-                    $("#predictMessage").text(
-                        `Prediction for ${response.player}: ${response.prediction.toFixed(2)}`
-                    );
-                } else {
-                    $("#predictMessage").text(response.message);
-                }
-            });
+            $("#predictMessage").text(""); // Clear previous messages
+            $.post("/predict", $("#predictForm").serialize())
+                .done(function(response) {
+                    if (response.status === "success") {
+                        $("#predictMessage").removeClass("error").text(
+                            `Prediction for ${response.player || "Player"}: ${response.prediction.toFixed(2)}`
+                        );
+                    } else {
+                        $("#predictMessage").addClass("error").text(response.message);
+                    }
+                })
+                .fail(function() {
+                    $("#predictMessage").addClass("error").text("An error occurred while predicting performance.");
+                });
         }
     </script>
 </body>
