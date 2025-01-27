@@ -57,6 +57,19 @@
         .error {
             color: red;
         }
+        section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        section h2 {
+            color: #333;
+        }
+        section ul, section ol {
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +116,36 @@
         <button type="button" onclick="predictPerformance()">Predict</button>
     </form>
     <p id="predictMessage" class="message"></p>
+
+    <section>
+        <h2>About This App</h2>
+        <p>This Player Performance Predictor uses historical player data to predict future performance. It is powered by a machine learning model (Random Forest) that analyzes patterns in:</p>
+        <ul>
+            <li><strong>Past Points:</strong> A player’s previous scores.</li>
+            <li><strong>Team Strength:</strong> How strong the player’s team is on a scale of 1–10.</li>
+            <li><strong>Opponent Rank:</strong> The ranking of the opponent on a scale of 1–10.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>How Predictions Are Made</h2>
+        <p>The model uses the following features to make predictions:</p>
+        <ul>
+            <li><strong>Past Points:</strong> The most important factor, as a player’s previous performance is a strong indicator of future success.</li>
+            <li><strong>Team Strength:</strong> The strength of the player’s team affects outcomes.</li>
+            <li><strong>Opponent Rank:</strong> The ranking of the opponent influences the prediction.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Limitations and Improvements</h2>
+        <p>While the app provides valuable insights, its accuracy depends on the quality and size of the training data. To improve predictions:</p>
+        <ul>
+            <li>Add more historical data to expand the dataset.</li>
+            <li>Ensure input data is balanced and representative of diverse scenarios.</li>
+            <li>Include a variety of examples covering different players and conditions.</li>
+        </ul>
+    </section>
 
     <footer>
         © 2025 Oseas Castillo. All Rights Reserved.
